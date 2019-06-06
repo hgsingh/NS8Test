@@ -8,11 +8,7 @@ const bodyParser = require('body-parser')
 const app = express()
 //accepts only json requests
 app.use(bodyParser.json())
-app.use(bodyParser.json({
-    type: function () {
-        return true
-    }
-}));
+
 const PORT = process.env.PORT || 3000
 
 const userSchema = mongoose.Schema({
@@ -61,84 +57,87 @@ const connectDb = () => {
 //     res.header("Access-Control-Allow-Methods", "POST");
 //     next();
 // });
-app.post('api/login', function (req, res) {
+app.post('/', function (req, res) {
     let user = req.body
     if (!validateEmail(String(user.email)) ||
-         !validatePassword(String(user.password)) ||
-        !validatePhoneNumber(String(user.phone)) ) {
+        !validatePassword(String(user.password)) ||
+        !validatePhoneNumber(String(user.phone))) {
         return res.status(400).send({
             success: 'false',
             message: 'send a valid requests',
         });
     } else {
-        let current_user = userSchema.statics.findByLogin(user.email)
-        if (current_user == undefined) {
-            //push the user and send back json
-            let newUser = new User({
-                email: user.email,
-                password: user.password,
-                phone: user.phone
-            })
-            newUser.save()
-            return res.status(200).send({
-                type: "CREATED"
-            })
-        } else {
-            if (user.password == current_user.password) {
-                let newEvent = new Event({
-                    event: "LOGIN",
-                    time: Date.now(),
-                    user: current_user.email
+        User.find({ email: user.email }, function (err, current_user) {
+            if (current_user === undefined) {
+                //push the user and send back json
+                let newUser = new User({
+                    email: user.email,
+                    password: user.password,
+                    phone: user.phone
                 })
-                newEvent.save()
-                return res.status(200).send({
-                    type: "LOGIN"
+                newUser.save()
+                res.status(200).send({
+                    type: "CREATED"
                 })
             } else {
-                return res.status(401).send({
-                    success: 'false',
-                    message: 'wrong password',
-                })
+                if (user.password == current_user.password) {
+                    let newEvent = new Event({
+                        event: "LOGIN",
+                        time: Date.now(),
+                        user: current_user.email
+                    })
+                    newEvent.save()
+                    res.status(200).send({
+                        type: "LOGIN"
+                    })
+                } else {
+                    res.status(401).send({
+                        success: 'false',
+                        message: 'wrong password',
+                    })
+                }
             }
-        }
+        })
+
     }
 })
 
-app.get('api / { user }', (req, res) => {
-    foundUser =  userSchema.statics.findByLogin(req.params.user)
+app.get('api/{user}', (req, res) => {
+    foundUser = userSchema.statics.findByLogin(req.params.user)
     if (found == undefined) {
         return res.status(404).send({
             success: 'false',
             message: 'no such user',
         })
     } else {
-        events =  eventSchema.statics.findAllBy(foundUser)
+        events = eventSchema.statics.findAllBy(foundUser)
         return res.status(200).send(
             { events }
         )
     }
 })
 
-app.get('api/eventList', function (req, res) {
+app.get('/', function (req, res) {
     Event.find({}, function (err, events) {
-        var eventMap = {};
+        var eventMap = {}
 
         events.forEach(function (event) {
-            eventMap[event._id] = user;
-        });
+            eventMap[event._id] = user
+        })
 
-        res.send(eventMap);
-    });
-});
+        res.send(eventMap)
+    })
+})
+
 connectDb().then(async () => {
     app.listen(PORT, () =>
         console.log(`User app listening on port ${PORT}!`),
-    );
-});
+    )
+})
 
 function validateEmail(email) {
     console.log(email)
-    if(email == undefined) return false
+    if (email == undefined) return false
     let re = /\S+@\S+\.\S+/
     return re.test(String(email).toLowerCase())
 }
