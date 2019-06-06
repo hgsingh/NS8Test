@@ -10,6 +10,7 @@ const app = express()
 app.use(bodyParser.json())
 
 const PORT = process.env.PORT || 3000
+const router = express.Router()
 
 const userSchema = new  mongoose.Schema({
     email: {
@@ -57,6 +58,19 @@ const connectDb = () => {
 //     res.header("Access-Control-Allow-Methods", "POST");
 //     next();
 // });
+
+app.all('/*', function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Accept");
+    res.header("Access-Control-Allow-Methods", "POST, GET");
+    next();
+  });
+
+  router.all('*', (request, response, next) => {
+    console.log('Incoming request to endpoint:', request.url);
+    next();
+})
+  
 app.post('/', function (req, res) {
     let user = req.body
     if (!validateEmail(String(user.email)) ||
@@ -103,7 +117,7 @@ app.post('/', function (req, res) {
     }
 })
 
-app.get('/{user}', (req, res) => {
+router.route('/:user').get( (req, res) => {
     User.findOne({ email: req.param.user }, function (err, foundUsers) {
         if (foundUsers == undefined || foundUsers.length == 0) {
             return res.status(404).send({
@@ -111,7 +125,7 @@ app.get('/{user}', (req, res) => {
                 message: 'no such user',
             })
         } else {
-            Event.find({ user:req.param.user},
+            Event.find({user:req.param.user},
                 new function(err, events ){
                     return res.status(200).send(
                         { events }
@@ -134,7 +148,7 @@ app.get('/', function (req, res) {
         res.send(eventMap)
     })
 })
-
+app.use(router)
 connectDb().then(async () => {
     app.listen(PORT, () =>
         console.log(`User app listening on port ${PORT}!`),
