@@ -11,7 +11,7 @@ app.use(bodyParser.json())
 
 const PORT = process.env.PORT || 3000
 
-const userSchema = mongoose.Schema({
+const userSchema = new  mongoose.Schema({
     email: {
         type: String,
         unique: true
@@ -20,7 +20,7 @@ const userSchema = mongoose.Schema({
     phone: String,
 })
 
-const eventSchema = mongoose.Schema({
+const eventSchema = new mongoose.Schema({
     event: String,
     time: Number,
     user: String
@@ -68,7 +68,8 @@ app.post('/', function (req, res) {
         });
     } else {
         User.find({ email: user.email }, function (err, current_user) {
-            if (current_user === undefined) {
+            console.log(current_user)
+            if (current_user.length == 0) {
                 //push the user and send back json
                 let newUser = new User({
                     email: user.email,
@@ -80,7 +81,8 @@ app.post('/', function (req, res) {
                     type: "CREATED"
                 })
             } else {
-                if (user.password == current_user.password) {
+                console.log(String(user.password) +String(current_user.password) )
+                if (String(user.password) === String(current_user.password)) {
                     let newEvent = new Event({
                         event: "LOGIN",
                         time: Date.now(),
