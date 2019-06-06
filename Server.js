@@ -67,7 +67,7 @@ app.post('/', function (req, res) {
             message: 'send a valid requests',
         });
     } else {
-        User.find({ email: user.email }, function (err, current_user) {
+        User.findOne({ email: user.email }, function (err, current_user) {
             console.log(current_user)
             if (current_user.length == 0) {
                 //push the user and send back json
@@ -81,11 +81,11 @@ app.post('/', function (req, res) {
                     type: "CREATED"
                 })
             } else {
-                if (String(user.password) === String(current_user[0].password)) {
+                if (String(user.password) === String(current_user.password)) {
                     let newEvent = new Event({
                         event: "LOGIN",
                         time: Date.now(),
-                        user: current_user[0].email
+                        user: current_user.email
                     })
                     newEvent.save()
                     res.status(200).send({
@@ -103,19 +103,24 @@ app.post('/', function (req, res) {
     }
 })
 
-app.get('api/{user}', (req, res) => {
-    foundUser = userSchema.statics.findByLogin(req.params.user)
-    if (found == undefined) {
-        return res.status(404).send({
-            success: 'false',
-            message: 'no such user',
-        })
-    } else {
-        events = eventSchema.statics.findAllBy(foundUser)
-        return res.status(200).send(
-            { events }
-        )
-    }
+app.get('/{user}', (req, res) => {
+    User.findOne({ email: req.param.user }, function (err, foundUsers) {
+        if (foundUsers == undefined || foundUsers.length == 0) {
+            return res.status(404).send({
+                success: 'false',
+                message: 'no such user',
+            })
+        } else {
+            Event.find({ user:req.param.user},
+                new function(err, events ){
+                    return res.status(200).send(
+                        { events }
+                    )
+                }
+            )            
+        }
+        res.send(eventMap)
+    })
 })
 
 app.get('/', function (req, res) {
