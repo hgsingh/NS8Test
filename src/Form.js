@@ -3,41 +3,56 @@ import './index.css';
 
 
 class Form extends React.Component {
-    state = {
-        canSubmit: true
-    }
+    
     constructor(props) {
         super(props)
         this.handleSubmit = this.handleSubmit.bind(this)
         this.setState = this.setState.bind(this)
+        this.state = {
+            canSubmit: false,
+            email:'',
+            password:'',
+            number:''
+        }
     }
 
     handleSubmit() {
         console.log('the value is: ')
     }
 
-    handleSubmitValue = (submitValue) => {
+    handleEmailValue = (submitValue) => {
         this.setState({
-            canSubmit: this.state.canSubmit && submitValue
+            email: submitValue
         })
-        console.log(submitValue)
-
+    }
+    handlePasswordValue = (submitValue) => {
+        this.setState({
+            password: submitValue
+        })
+    }
+    handlePhoneValue = (submitValue) => {
+        this.setState({
+            number: submitValue
+        })
     }
 
     render() {
-        let EditPhone = editContent("input")
-        let EditEmail = editContent("input")
-        let EditPassword = editContent("input")
+        let EditPhone = editContent("input", validatePhoneNumber)
+        let EditEmail = editContent("input", validateEmail)
+        let EditPassword = editContent("input",validatePassword)
         return (<form onSubmit={this.state.canSubmit ? this.handleSubmit : undefined}>
             <div>
-                <EditEmail placeholder="Email" onSaveValue={this.handleSubmitValue} validate={validateEmail} />
+                <EditEmail placeholder="Email" 
+                 onSaveValue={this.handleEmailValue}  />
             </div>
             <div>
-                <EditPassword placeholder="Password" type="password" autoComplete="off" onSaveValue={this.handleSubmitValue}
-                    validate={validatePassword} />
+                <EditPassword placeholder="Password" 
+                type="password" 
+                autoComplete="off" onSaveValue={this.handlePasswordValue}/>
             </div>
             <div>
-                <EditPhone placeholder="Phone Number" onSaveValue={this.handleSubmitValue} validate={validatePhoneNumber} />
+                <EditPhone placeholder="Phone Number" 
+                onSaveValue={this.handlePhoneValue}  />
             </div>
 
             <button onClick={this.onSubmit}>Submit</button>
@@ -62,7 +77,7 @@ function validatePassword(password) {
     return password !== undefined && String(password) !== ''
 }
 
-function editContent(EditComponent) {
+function editContent(EditComponent, validate) {
     return class extends React.Component {
         state = {
             editing: false
@@ -100,9 +115,10 @@ function editContent(EditComponent) {
             this.setState({
                 editing: false
             }, () => {
-             
-                let valid = this.props.validate(this.domElm.value)
-                this.props.onSaveValue(valid)
+                let valid = validate(this.domElm.value)
+                if(valid){
+                    this.props.onSaveValue(this.domElm.value)
+                }
             })
         }
         handleKeyDown = (e) => {
