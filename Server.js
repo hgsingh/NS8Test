@@ -81,12 +81,11 @@ app.post('/', function (req, res) {
                     type: "CREATED"
                 })
             } else {
-                console.log(String(user.password) +String(current_user.password) )
-                if (String(user.password) === String(current_user.password)) {
+                if (String(user.password) === String(current_user[0].password)) {
                     let newEvent = new Event({
                         event: "LOGIN",
                         time: Date.now(),
-                        user: current_user.email
+                        user: current_user[0].email
                     })
                     newEvent.save()
                     res.status(200).send({
@@ -124,7 +123,7 @@ app.get('/', function (req, res) {
         var eventMap = {}
 
         events.forEach(function (event) {
-            eventMap[event._id] = user
+            eventMap[event._id] = event
         })
 
         res.send(eventMap)
