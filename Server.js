@@ -12,7 +12,7 @@ app.use(bodyParser.json())
 const PORT = process.env.PORT || 3000
 const router = express.Router()
 
-const userSchema = new  mongoose.Schema({
+const userSchema = new mongoose.Schema({
     email: {
         type: String,
         unique: true
@@ -59,18 +59,18 @@ const connectDb = () => {
 //     next();
 // });
 
-app.all('/*', function(req, res, next) {
+app.all('/*', function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Accept");
     res.header("Access-Control-Allow-Methods", "POST, GET");
     next();
-  });
+});
 
-  router.all('*', (request, response, next) => {
+router.all('*', (request, response, next) => {
     console.log('Incoming request to endpoint:', request.url);
     next();
 })
-  
+
 app.post('/', function (req, res) {
     let user = req.body
     if (!validateEmail(String(user.email)) ||
@@ -83,7 +83,7 @@ app.post('/', function (req, res) {
     } else {
         User.findOne({ email: user.email }, function (err, current_user) {
             console.log(current_user)
-            if (current_user.length == 0) {
+            if (current_user == undefined || current_user.length == 0) {
                 //push the user and send back json
                 let newUser = new User({
                     email: user.email,
@@ -117,23 +117,20 @@ app.post('/', function (req, res) {
     }
 })
 
-router.route('/:user').get( (req, res) => {
-    User.findOne({ email: req.param.user }, function (err, foundUsers) {
-        if (foundUsers == undefined || foundUsers.length == 0) {
+router.route('/:user').get((req, res) => {
+    console.log(req.params.user)
+    Event.find({ user: req.params.user }, function (err, foundUsers) {
+        if (foundUsers == undefined) {
             return res.status(404).send({
                 success: 'false',
                 message: 'no such user',
             })
         } else {
-            Event.find({user:req.param.user},
-                new function(err, events ){
-                    return res.status(200).send(
-                        { events }
-                    )
-                }
-            )            
+            console.log(foundUsers)
+            return res.status(200).send(
+                { foundUsers }
+            )
         }
-        res.send(eventMap)
     })
 })
 
@@ -142,7 +139,7 @@ app.get('/', function (req, res) {
         var eventMap = {}
 
         events.forEach(function (event) {
-            eventMap[event._id] = event
+            eventMap[event.user] = event
         })
 
         res.send(eventMap)
